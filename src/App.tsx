@@ -4,7 +4,7 @@ import { useGlobalStore } from "@stores/index";
 import zhCN from "antd/locale/zh_CN";
 import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
-import "antd/dist/reset.css";
+// import "antd/dist/reset.css";
 
 dayjs.locale("zh-cn");
 

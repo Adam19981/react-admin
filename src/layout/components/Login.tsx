@@ -1,82 +1,95 @@
-import React, { useEffect, useState } from "react";
-import { Button, Form, Input } from "antd";
-import loginStyle from "../index.module.scss";
-import { getImages, login } from "@/api/login/loginInterface";
-import { rsaEncrypt } from "@/utils";
+import React, {useEffect, useRef, useState} from "react";
+import '../login.scss'
+import  classNames  from  'classnames'
+import {ModelLoader, ThreeBase} from "@utils/three";
 
-type FieldType = {
-	username?: string;
-	password?: string;
-	remember?: string;
-};
+const Login =  () => {
 
-const publicKey = `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnKgH+2s5NRp+tmP4d41G
-xhhCbAdDvd8Q8D0DAMvk0I40bLEhAj35HkZ36ETbpP98GWwPznM+gNZQ++0yoOZs
-9PMkR0FQu7YnsVsv0a/7P/gaWsDemQBXWPrc51SwsFhFWfTeurH0j1moOSIFIJKw
-PKls8ppOcLU1gYlR2dfRaxj0bIvXRsCmKalvVciIqAJ394z9VnU7adzkHgO9xZXP
-jjK13TWXBJtOKLZ5K3fA6BzIcs7tnkVvqudDcIHR5ElS5YZTwZhintYa0zVVG2wf
-6bBBbH+/s6LRsI4FJVbVvjziCL9fyjyPFTiLNOuSMywzMciUR1FKXxnB1VRNOZDc
-wQIDAQAB
------END PUBLIC KEY-----`;
-const Login = () => {
-	const [image, setImage] = useState<string>("");
-	const onFinish = async (values: any) => {
-		console.log(values);
-		const req = {
-			...values,
-			password: rsaEncrypt(publicKey, values.password),
-			imgEncrypt: form.imgEncrypt
-		};
-		await login(req);
-	};
+    const pinBox = useRef<HTMLDivElement>(null)
 
-	useEffect(() => {
-		getImages().then(res => {
-			const { data } = res;
-			setImage(data.image_base_64);
-			form.imgEncrypt = data.img_encrypt;
-		});
-	}, []);
+    const [isLogin,setLogin] = useState(true)
 
-	const form = {
-		imgEncrypt: ""
-	};
+    useEffect(() => {
+        createThree()
+    },[])
 
-	return (
-		<div className={loginStyle.login_box}>
-			<Form
-				name="basic"
-				labelCol={{ span: 8 }}
-				wrapperCol={{ span: 16 }}
-				style={{ maxWidth: 600 }}
-				initialValues={{ remember: true }}
-				onFinish={onFinish}
-				autoComplete="off"
-			>
-				<Form.Item<FieldType> label="账号" name="phone" rules={[{ required: true, message: "请输入账号" }]}>
-					<Input />
-				</Form.Item>
+    function handleSignup(){
+        pinBox.current!.style.transform = "translateX(80%)"
+        setLogin(false)
+    }
 
-				<Form.Item<FieldType> label="密码" name="password" rules={[{ required: true, message: "请输入密码" }]}>
-					<Input.Password />
-				</Form.Item>
+    function handleSignIn(){
+        pinBox.current!.style.transform = "translateX(0%)"
+        setLogin(true)
+    }
 
-				<Form.Item<FieldType> label="验证码" name="code" rules={[{ required: true, message: "请输入验证码" }]}>
-					<div className={loginStyle.login_box_code}>
-						<Input />
-						<img alt="" src={image} />
-					</div>
-				</Form.Item>
+    async function createThree(){
+         const container = document.getElementById('three-container')
+        if (!container)return
+        const threeBase = new ThreeBase(container,{
+            fov: 90,
+            near: 0.1,
+            far: 1000,
+            position: [0, 10, 25],
+            aspect: container.offsetWidth / container.offsetHeight
+        }
+        )
+        const modelLoader = new ModelLoader(threeBase);
 
-				<Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-					<Button type="primary" htmlType="submit">
-						登陆
-					</Button>
-				</Form.Item>
-			</Form>
-		</div>
-	);
+        const { scene} =   await  modelLoader.initExternalModel('/model.glb')
+
+        scene.position.z = -5
+        scene.position.y = -5
+        threeBase.add(scene)
+
+        threeBase.surroundCamera()
+    }
+
+  return (
+      <div className="login-main">
+          <div id="three-container"></div>
+          <div className="container">
+              <div className="welcome">
+                  <div className="pinkbox" ref={pinBox}>
+                      <div className={classNames({'signup':true,"nodisplay":isLogin})}>
+                          <h1>register</h1>
+                          <form autoComplete="off">
+                              <input type="text" placeholder="username"/>
+                              <input type="email" placeholder="email"/>
+                              <input type="password" placeholder="password"/>
+                              <input type="password" placeholder="confirm password"/>
+                              <button className="button submit">create account </button>
+                          </form>
+                      </div>
+                      <div className={classNames({'signin':true,"nodisplay":!isLogin})}>
+                          <h1>sign in</h1>
+                          <form className="more-padding" autoComplete="off">
+                              <input type="text" placeholder="username"/>
+                              <input type="password" placeholder="password"/>
+
+                              <button className="button submit">login</button>
+                          </form>
+                      </div>
+                  </div>
+                  <div  className={classNames({'leftbox':true,"nodisplay":isLogin})}>
+                      <h2 className="title"><span>BLOOM</span>&<br/>BOUQUET</h2>
+                      <p className="desc">pick your perfect <span>bouquet</span></p>
+                      {/*<img className="flower smaller" src="https://image.ibb.co/d5X6pn/1357d638624297b.jpg" alt="1357d638624297b" border="0"/>*/}
+                      <p className="account">have an account?</p>
+                      <button className="button" id="signin" onClick={handleSignIn}>login</button>
+                  </div>
+                  <div className={classNames({'rightbox':true,"nodisplay":!isLogin})}>
+                      <h2 className="title"><span>BLOOM</span>&<br/>BOUQUET</h2>
+                      <p className="desc"> pick your perfect <span>bouquet</span></p>
+                      {/*<img alt="" className="flower" src="https://preview.ibb.co/jvu2Un/0057c1c1bab51a0.jpg"/>*/}
+                      <p className="account">dont have an account?</p>
+                      <button className="button" id="signup" onClick={handleSignup}>sign up</button>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+  )
 };
 
 export default Login;
