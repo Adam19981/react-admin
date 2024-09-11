@@ -8,6 +8,7 @@ import "dayjs/locale/zh-cn";
 
 dayjs.locale("zh-cn");
 
+console.log(1)
 const BasicLayout = lazy(() => import("./layout"));
 
 export function authLoader() {
